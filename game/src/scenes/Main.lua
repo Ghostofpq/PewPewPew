@@ -47,15 +47,8 @@ function Class:enterScene(event)
 		anchor = "tl"
 	}
 
-	self.foreground = Sprite.create{
-		spriteSet = "level",
-		animation = "foreground",
-		group = groups.foreground,
-		anchor = "tl"
-	}
-
 	self.scoreText = Text.create{
-		position = vec2(210, -1),
+		position = vec2(0, -1),
 		group = groups.hud,
 		anchor = "tl",
 		size = 16,
@@ -76,8 +69,6 @@ function Class:enterScene(event)
 			}
 		}
 	}
-
-	self.spawner = Spawner.create()
 
 	self:increaseScore{
 		value = 0
