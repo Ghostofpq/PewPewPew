@@ -141,68 +141,70 @@ end
 
 -- Update the scene
 function Class:update()
-	for i = 1, #self.timeline do
-		local fx = self.timeline[i]
-		local start = fx.from ~= nil and fx.from or fx.at
+	if self.delay <= 0 then
+		for i = 1, #self.timeline do
+			local fx = self.timeline[i]
+			local start = fx.from ~= nil and fx.from or fx.at
 
-		if self.time >= start then
-			-- Time is between "from" and "to"
-			if fx.from ~= nil and (fx.to == nil or self.time <= fx.to) then
-				local options = {
-					parameters = fx.parameters,
-					firstFrame = not fx.started,
-					delta = self.time - fx.from,
-					finishing = self.finishing
-				}
+			if self.time >= start then
+				-- Time is between "from" and "to"
+				if fx.from ~= nil and (fx.to == nil or self.time <= fx.to) then
+					local options = {
+						parameters = fx.parameters,
+						firstFrame = not fx.started,
+						delta = self.time - fx.from,
+						finishing = self.finishing
+					}
 
-				-- Compute progress
-				if fx.to then
-					options.duration = fx.to - fx.from
-					options.progress = options.delta / options.duration
+					-- Compute progress
+					if fx.to then
+						options.duration = fx.to - fx.from
+						options.progress = options.delta / options.duration
 
-					if options.progress == 1 then
-						fx.finished = true
+						if options.progress == 1 then
+							fx.finished = true
+						end
 					end
-				end
 
-				-- Send event
-				if not self.target[fx.action] then
-					utils.softError("Timeline error: action "..fx.action.." does not exist in target.")
-				else
-					self.target[fx.action](self.target, options)
-				end
-
-			-- Time is after "to" or "at" and FX has not been played yet
-			elseif not fx.finished then
-				fx.finished = true
-
-				-- Send event
-				if not self.target[fx.action] then
-					utils.softError("Timeline error: action "..fx.action.." does not exist in target.")
-				else
-					if fx.at ~= nil then
-						self.target[fx.action](self.target, {
-							parameters = fx.parameters,
-							firstFrame = true,
-							delta = 0.0,
-							duration = 0.0,
-							progress = 1.0,
-							finishing = self.finishing
-						})
+					-- Send event
+					if not self.target[fx.action] then
+						utils.softError("Timeline error: action "..fx.action.." does not exist in target.")
 					else
-						self.target[fx.action](self.target, {
-							parameters = fx.parameters,
-							firstFrame = not fx.started,
-							delta = fx.to - fx.from,
-							duration = fx.to - fx.from,
-							progress = 1.0,
-							finishing = self.finishing
-						})
+						self.target[fx.action](self.target, options)
+					end
+
+				-- Time is after "to" or "at" and FX has not been played yet
+				elseif not fx.finished then
+					fx.finished = true
+
+					-- Send event
+					if not self.target[fx.action] then
+						utils.softError("Timeline error: action "..fx.action.." does not exist in target.")
+					else
+						if fx.at ~= nil then
+							self.target[fx.action](self.target, {
+								parameters = fx.parameters,
+								firstFrame = true,
+								delta = 0.0,
+								duration = 0.0,
+								progress = 1.0,
+								finishing = self.finishing
+							})
+						else
+							self.target[fx.action](self.target, {
+								parameters = fx.parameters,
+								firstFrame = not fx.started,
+								delta = fx.to - fx.from,
+								duration = fx.to - fx.from,
+								progress = 1.0,
+								finishing = self.finishing
+							})
+						end
 					end
 				end
-			end
 
-			fx.started = true
+				fx.started = true
+			end
 		end
 	end
 end

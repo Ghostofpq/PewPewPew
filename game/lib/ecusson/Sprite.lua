@@ -196,6 +196,13 @@ function Class.loadSheet(sheetName)
 	end
 end
 
+-- Unload every loaded spritesheet
+function Class:tearDown()
+	for sheetName, sheet in pairs(spritesheets) do
+		Sprite.unloadSheet(sheetName)
+	end
+end
+
 -- Unload a spritesheet previously loaded with loadSheet
 --
 -- Parameters:
@@ -209,6 +216,18 @@ function Class.unloadSheet(sheetName)
 		end
 
 		spritesheets[sheetName] = false
+	end
+end
+
+-- Unload a bunch of spritesheets previously loaded with loadSheet
+--
+-- Parameters:
+--  sheetNames: An array with the names of the spritesheets to unload
+function Class.unloadSheets(sheetNames)
+	if sheetNames then
+		for i = 1, #sheetNames do
+			Sprite.unloadSheet(sheetNames[i])
+		end
 	end
 end
 
@@ -252,6 +271,7 @@ end
 --  visible: If false, the object will not appear on screen (default is true)
 --  toBack: If true, creates the object on back of the group (behind other objects already in this group)
 --  color: The sprite tint, as an array of color components (r, g, b, a (optional)) (default is 255, 255, 255, 255)
+--  timescale: The time scale of the sprite, 0.5 plays twice as slow while 2.0 plays twice as fast (default is 1)
 --  mask: The mask to apply to the sprite
 --   image: The mask image
 --   position: The mask position (default is vec2(0, 0))
@@ -272,6 +292,7 @@ function Class:super(options)
 	self.autoHide = options.autoHide or false
 	self.autoDestroy = options.autoDestroy or false
 	self.loopCount = 0
+	self.timescale = options.timescale or 1.0
 	self.attachments = {}
 	self.attachmentsCount = 0
 
@@ -644,19 +665,24 @@ function Class:repositionAttachment(attachmentName)
 		attachment:setPosition(position)
 
 		-- Rotate attachment
+		local rotation
 		if attachmentOptions.rotations then
-			local rotation = attachmentOptions.rotations[frame]
+			rotation = attachmentOptions.rotations[frame]
 			if not rotation then
 				rotation = attachmentOptions.rotations[1]
 			end
 
-			if rotation ~= nil then
-				attachment:setRotation(rotation)
-			end
+			attachment:setRotation(rotation)
 		end
 	else
 		attachment:hide()
 	end
+end
+
+function Class:setRotation(rotation)
+	Super.setRotation(self, rotation)
+
+	self:repositionAttachments()
 end
 
 -- Set the color of the display object
@@ -669,6 +695,10 @@ function Class:setColor(color)
 	for attachmentName, attachment in pairs(self.attachments) do
 		attachment:setColor(self.color)
 	end
+end
+
+function Class:setTimeScale(timescale)
+	self._displayObject.timeScale = timescale
 end
 
 -----------------------------------------------------------------------------------------
@@ -758,7 +788,7 @@ end
 --  event: The event, with these values:
 --   timeScale: The new time scale
 function Class:spriteChangeSpeed(event)
-	self._displayObject.timeScale = event.timeScale
+	self._displayObject.timeScale = self.timescale * event.timeScale
 end
 
 -----------------------------------------------------------------------------------------

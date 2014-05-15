@@ -171,6 +171,30 @@ function Class:setPosition(position)
 	target.y = position.y
 end
 
+-- Set the text rotation
+--
+-- Parameters:
+--  rotation: the rotation
+function Class:setRotation(rotation)
+	Super.setRotation(self, rotation)
+
+	for _, shadow in pairs(self.shadows) do
+		shadow:setRotation(rotation)
+	end
+end
+
+-- Set the scale of the display object
+--
+-- Parameters:
+--  scale: The new scale
+function Class:setScale(scale)
+	Super.setScale(self, scale)
+
+	for _, shadow in pairs(self.shadows) do
+		shadow:setScale(scale)
+	end
+end
+
 -- Set the text content
 --
 -- Parameters:

@@ -12,6 +12,12 @@
 local Class = {}
 
 -----------------------------------------------------------------------------------------
+-- Local configuration
+-----------------------------------------------------------------------------------------
+
+local memoryWarningMinGarbageInterval = 15.0
+
+-----------------------------------------------------------------------------------------
 -- Initialization and Destruction
 -----------------------------------------------------------------------------------------
 
@@ -33,6 +39,7 @@ function Class.create(options)
 	self.screenshotName = options.screenshotName
 	self.filePath = system.pathForFile(self.bugReportName, system.DocumentsDirectory)
 	self.oldPrint = print
+	self.lastMemoryWarning = 0
 	self.screenshot = false
 	self.bugCaught = false
 	self.lines = {}
@@ -179,6 +186,14 @@ function Class:memoryWarning(event)
 	print("[Warning] *X*  Memory  Warning  *X*")
 	print("[Warning] *X*                   *X*")
 	print("[Warning] *X*X*X*X*X*X*X*X*X*X*X*X*")
+
+	local time = utils.getTime()
+	if time > self.lastMemoryWarning + memoryWarningMinGarbageInterval then
+		print("[Memory Warning] Collect garbage")
+		Sound.purgeSounds()
+		collectgarbage("collect")
+		self.lastMemoryWarning = time
+	end
 
 	if utils and utils.printMemory then
 		utils.printMemory()

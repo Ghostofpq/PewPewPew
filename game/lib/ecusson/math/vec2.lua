@@ -296,18 +296,15 @@ function Class:draw(options)
 			self.shape.height = options.size
 		end
 
-		local position = self - vec2(self.shape.width, self.shape.height) * 0.5
-		self.shape.x = position.x
-		self.shape.y = position.y
+		self.shape.x = self.x
+		self.shape.y = self.y
 
 		if options.color then
 			self.shape:setFillColor(unpack(options.color))
 		end
 	else
 		local size = options.size or 2
-		local position = self - vec2(size, size) * 0.5
-
-		self.shape = display.newRect(position.x, position.y, size, size)
+		self.shape = display.newRect(self.x, self.y, size, size)
 		self.shape:setFillColor(unpack(options.color or { 255, 255, 255 }))
 	end
 

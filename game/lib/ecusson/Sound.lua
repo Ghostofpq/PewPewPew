@@ -21,6 +21,7 @@ local utils = require("lib.ecusson.Utils")
 -----------------------------------------------------------------------------------------
 
 local Class = {}
+local Sound = Class
 
 -----------------------------------------------------------------------------------------
 -- Main
@@ -32,6 +33,7 @@ local media = require("media")
 
 -- 'Touch' the audio class to enable it by getting one of its attributes
 local totalChannels = audio.totalChannels
+local maxNoChannelsFreeDuration = 1.0
 
 -- For panning: ensure correct distance model is being used.
 al.DistanceModel(al.INVERSE_DISTANCE_CLAMPED)
@@ -61,11 +63,14 @@ local defaultExtension = "mp3"
 local platformName = system.getInfo("platformName")
 local enableMedia = platformName == "Android"
 
--- The sound global volume
-local globalVolume = 1.0
+-- The group volumes
+local groupVolumes = {}
 
 -- Current sounds playing by channel id
 local channels = {}
+
+-- The last time all the channels were taken
+local noChannelsFreeTime
 
 -----------------------------------------------------------------------------------------
 -- Class methods
@@ -80,39 +85,50 @@ function Class.setup(options)
 	soundsPath = options.soundsPath
 
 	-- Load sounds
-	for soundId, soundOptions in pairs(options.soundsData) do
-		-- Select the appropriate method to load the sound
-		local media = enableMedia and (soundOptions.media or false)
-		local loadMethod
+	for groupId, groupSounds in pairs(options.soundsData) do
+		groupVolumes[groupId] = 1.0
 
-		if soundOptions.stream then
-			loadMethod = audio.loadStream
-		elseif media then
-			loadMethod = media.newEventSound
-		else
-			loadMethod = audio.loadSound
-		end
+		for soundId, soundOptions in pairs(groupSounds) do
+			-- Select the appropriate method to load the sound
+			local media = enableMedia and (soundOptions.media or false)
+			local loadMethod
 
-		-- Save sound settings
-		sounds[soundId] = {
-			name = soundId,
-			loadMethod = loadMethod,
-			loaded = false,
-			settings = {
-				variations = soundOptions.variations or { "" },
-				loops = soundOptions.loops or 0,
-				volume = soundOptions.volume or 1,
-				duration = soundOptions.duration or nil,
-				fadeIn = soundOptions.fadeIn or nil,
-				fadeOut = soundOptions.fadeOut or nil,
-				pitch = soundOptions.pitch or 1,
-				stream = soundOptions.stream or false,
-				media = media,
-				extension = soundOptions.extension or defaultExtension,
-				autoDestroy = soundOptions.autoDestroy ~= nil and soundOptions.autoDestroy or true,
-				autoUnload = soundOptions.autoUnload or false
+			if soundOptions.stream then
+				loadMethod = audio.loadStream
+			elseif media then
+				loadMethod = media.newEventSound
+			else
+				loadMethod = audio.loadSound
+			end
+
+			local autoDestroy = soundOptions.autoDestroy
+			if autoDestroy == nil then
+				autoDestroy = true
+			end
+
+			-- Save sound settings
+			sounds[soundId] = {
+				name = soundId,
+				groupId = groupId,
+				loadMethod = loadMethod,
+				loaded = false,
+				purgeable = soundOptions.purgeable or false,
+				settings = {
+					variations = soundOptions.variations or { "" },
+					loops = soundOptions.loops or 0,
+					volume = soundOptions.volume or 1,
+					duration = soundOptions.duration or nil,
+					fadeIn = soundOptions.fadeIn or nil,
+					fadeOut = soundOptions.fadeOut or nil,
+					pitch = soundOptions.pitch or 1,
+					stream = soundOptions.stream or false,
+					media = media,
+					extension = soundOptions.extension or defaultExtension,
+					autoDestroy = autoDestroy,
+					autoUnload = soundOptions.autoUnload or false
+				}
 			}
-		}
+		end
 	end
 end
 
@@ -192,17 +208,46 @@ function Class.unloadSound(soundId)
 	end
 end
 
+-- Unload a bunch of sounds previously loaded with loadSound
+--
+-- Parameters:
+--  soundIds: An array with the ids of the sounds to unload
+function Class.unloadSounds(soundIds)
+	if soundIds then
+		for i = 1, #soundIds do
+			Sound.unloadSound(soundIds[i])
+		end
+	end
+end
+
 -- Set the global volume of the whole application
 --
 -- Parameters:
 --  volume: The new volume, in [0, 1]
 function Class.setGlobalVolume(volume)
-	globalVolume = volume
+	audio.setVolume(volume)
+end
+
+-- Set the volume of a whole group of sounds
+--
+-- Parameters:
+--  group: The group id
+--  volume: The new volume, in [0, 1]
+function Class.setGroupVolume(options)
+	groupVolumes[options.groupId] = options.volume
 
 	for i = 1, audio.totalChannels do
 		local sound = channels[i]
 		if sound and sound.id then
 			sound:resetSoundsVolume()
+		end
+	end
+end
+
+function Class.purgeSounds()
+	for soundId, soundDefinition in pairs(sounds) do
+		if soundDefinition.purgeable then
+			Class.unloadSound(soundId)
 		end
 	end
 end
@@ -245,11 +290,14 @@ end
 --  onSoundComplete: The callback called when the sound has finished playing (optional).
 function Class.create(sound, options)
 	local self = utils.extend(Class)
+
+	local soundDefinition = sounds[sound]
+
 	self.id = sound
+	self.groupId = soundDefinition.groupId
 	self.playing = true
 
 	-- Lazy-load sound if not already loaded
-	local soundDefinition = sounds[sound]
 	if not soundDefinition.loaded then
 		Class.loadSound(sound)
 	end
@@ -258,21 +306,62 @@ function Class.create(sound, options)
 
 	if audio.freeChannels == 0 then
 		print("[Ecusson:Sound] Sound "..soundDefinition.name.." could not be played because all channels are in use.")
+
+		if not noChannelsFreeTime then
+			-- The time when all channels were taken
+			noChannelsFreeTime = utils.getTime()
+		elseif utils.getTime() - noChannelsFreeTime > maxNoChannelsFreeDuration then
+			print("[Ecusson:Sound] No channels were free for at least "..maxNoChannelsFreeDuration.." second(s), "..
+				"stop all sounds and free all channels.")
+
+			-- Free all the sounds!
+			audio.stop()
+			noChannelsFreeTime = nil
+		end
 	else
+		noChannelsFreeTime = nil
+
 		-- Determine which variation to play
-		local variationId = options.variation or random(#soundDefinition.variations)
+		local variationCount = #soundDefinition.variations
+		local variationId = 1
+		if options.variation then
+			variationId = options.variation
+		elseif variationCount > 1 then
+			-- Prevent the same variation to be played twice in a row
+			repeat
+				variationId = random(variationCount)
+			until variationId ~= soundDefinition.lastVariationId
+		end
+
 		local variation = soundDefinition.variations[variationId]
+		soundDefinition.lastVariationId = variationId
 
 		-- Initialize attributes
+		self.isMedia = options.media
+		if self.isMedia == nil then
+			self.isMedia = variation.media
+		end
+
+		self.isStream = options.stream
+		if self.isStream == nil then
+			self.isStream = variation.stream
+		end
+
+		self.autoDestroy = options.autoDestroy
+		if self.autoDestroy == nil then
+			self.autoDestroy = variation.autoDestroy
+		end
+
+		self.autoUnload = options.autoUnload
+		if self.autoUnload == nil then
+			self.autoUnload = variation.autoUnload
+		end
+
 		local duration = options.duration or variation.duration
 		local fadeIn = options.fadeIn or variation.fadeIn
 		local pitch = options.pitch or variation.pitch
 		local volume = options.volume or variation.volume
 		self.fadeOut = options.fadeOut or variation.fadeOut
-		self.isMedia = options.media ~= nil and options.media or variation.media
-		self.isStream = options.stream ~= nil and options.stream or variation.stream
-		self.autoDestroy = options.autoDestroy ~= nil and options.autoDestroy or variation.autoDestroy
-		self.autoUnload = options.autoUnload ~= nil and options.autoUnload or variation.autoUnload
 		self.onComplete = options.onSoundComplete
 		self.handle = variation.handle
 		self.playing = true
@@ -310,9 +399,9 @@ function Class.create(sound, options)
 			al.Source(self.source, al.MAX_DISTANCE, 4)
 
 			-- Set volume
-			if not fadeIn and volume then
+			if not fadeIn then
 				self:setVolume{
-					volume = utils.extractValue(volume)
+					volume = volume and utils.extractValue(volume) or 1.0
 				}
 			end
 
@@ -437,10 +526,10 @@ function Class:setVolume(options)
 			audio.fade{
 				channel = self.channel,
 				time = utils.extractValue(options.time) * 1000,
-				volume = self.volume * globalVolume
+				volume = self.volume * groupVolumes[self.groupId]
 			}
 		else
-			audio.setVolume(self.volume * globalVolume, {
+			audio.setVolume(self.volume * groupVolumes[self.groupId], {
 				channel = self.channel
 			})
 		end
@@ -498,7 +587,7 @@ function Class:stop(fadeOutTime)
 	end
 end
 
--- Resets the sound volume, taking into account the global volume (called by setGlobalVolume)
+-- Resets the sound volume, taking into account the global volume (called by setGroupVolume)
 function Class:resetSoundsVolume()
 	self:setVolume{
 		volume = self.volume

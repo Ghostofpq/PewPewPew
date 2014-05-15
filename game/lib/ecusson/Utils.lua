@@ -15,12 +15,8 @@ local Class = {}
 -- Local attributes
 -----------------------------------------------------------------------------------------
 
+local floor = math.floor
 local ceil = math.ceil
-local random = math.random
-
-local dtWarning = 0.1
-local maxDt = 0.2
-
 local random = math.random
 local min = math.min
 local max = math.max
@@ -28,6 +24,10 @@ local abs = math.abs
 local sin = math.sin
 local PI = math.pi
 local PI2 = PI * 0.5
+
+local dtWarning = 0.1
+local maxDt = 0.2
+
 local currentId = 0
 
 -- Function replacing the destroy method after an object has been destroyed.
@@ -216,6 +216,24 @@ function Class.extractValue(value)
 	end
 end
 
+-- Add a 0 if needed before a number so it always uses 2 characters
+--
+-- Parameters:
+--  value: The time value to pan
+--
+-- Return the panned time
+function Class.panTime(value)
+	return value < 10 and "0"..value or value
+end
+
+function Class.toReadableTime(time, showMilliseconds)
+	local minutes = floor(time / 60)
+	local seconds = utils.panTime(floor(time - 60 * minutes))
+
+	local milliseconds = showMilliseconds and "."..utils.panTime(floor((time - 60 * minutes - seconds) * 100)) or ""
+	return minutes..":"..seconds..milliseconds
+end
+
 -- Get an universal unique id
 --
 -- Returns:
@@ -243,8 +261,11 @@ function Class.printTable(var, name, iteration)
 			print(name .. " = " .. tostring(var))
 		else
 			-- for tables, recurse through children
+			local hasChildren = false
 			for k, v in pairs(var) do
 				local child
+
+				hasChildren = true
 
 				if type(k) == "string" then
 					if string.find(k, "%a[%w_]*") == 1 then
@@ -259,6 +280,10 @@ function Class.printTable(var, name, iteration)
 				end
 
 				Class.printTable(v, child, iteration + 1)
+			end
+
+			if not hasChildren then
+				print(name .. " = {}")
 			end
 		end
 	end
@@ -375,6 +400,10 @@ function Class.interpolateSin(options)
 	return options.from + (options.to - options.from) * sin(options.delta * PI2)
 end
 
+function Class.interpolateQuad(options)
+	return options.from + (options.to - options.from) * (1 + sin(options.delta * PI - PI2)) * 0.5
+end
+
 -- Encode a value to be used in an URL
 --
 -- Parameters:
@@ -471,8 +500,6 @@ end
 
 -- Print in the console the memory usage
 function Class.printMemory()
-	collectgarbage("collect")
-
 	print(" ")
 	print("------ MEMORY USAGE ------")
 	print(" FPS: "..display.fps)

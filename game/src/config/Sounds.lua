@@ -38,32 +38,35 @@
 -----------------------------------------------------------------------------------------
 
 return {
-	music_game = {
-		stream = true,
-		volume = 0.3,
-		fadeOut = 1.5
+	music = {
+		music_game = {
+			stream = true,
+			volume = 0.3,
+			fadeOut = 1.5
+		}
 	},
+	sfx={
+		hammer_hit = {
+			variations = { "_01", "_02" },
+			volume = 0.6,
+			pitch = { 0.9, 1.15 }
+		},
 
-	hammer_hit = {
-		variations = { "_01", "_02" },
-		volume = 0.6,
-		pitch = { 0.9, 1.15 }
-	},
+		hammer_miss = {
+			volume = 0.8,
+			pitch = { 0.75, 1 }
+		},
 
-	hammer_miss = {
-		volume = 0.8,
-		pitch = { 0.75, 1 }
-	},
+		dog_spawn = {
+			variations = { "_01", "_02" },
+			volume = 0.5,
+			pitch = { 0.8, 1.1 }
+		},
 
-	dog_spawn = {
-		variations = { "_01", "_02" },
-		volume = 0.5,
-		pitch = { 0.8, 1.1 }
-	},
-
-	dog_death = {
-		variations = { "_01", "_02" },
-		volume = 1,
-		pitch = { 0.8, 1.1 }
+		dog_death = {
+			variations = { "_01", "_02" },
+			volume = 1,
+			pitch = { 0.8, 1.1 }
+		}
 	}
 }

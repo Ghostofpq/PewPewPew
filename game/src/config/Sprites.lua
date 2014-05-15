@@ -27,18 +27,11 @@ return {
 				background = {},
 				foreground = {}
 			},
-
-			dog = {
-				idle = {
-					frameCount = 2,
-					period = 0.2
-				},
-
-				dead = {
-					frameCount = 5,
-					period = 1.5,
-					loopCount = 1
-				}
+			main = {
+				vaisseau = {}
+			},
+			generated = {
+				laser = {}
 			}
 		}
 	},

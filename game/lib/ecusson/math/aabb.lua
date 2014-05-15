@@ -110,12 +110,18 @@ function Class:collideLine(a, b, _collisionsCount)
 	-- Both points are inside the box
 	if aCode == CS_CODES.INSIDE and bCode == CS_CODES.INSIDE then
 		-- Return the number of intersections with the box (0, 1 or 2)
-		return _collisionsCount
+		return {
+			collides = _collisionsCount ~= -1,
+			collisionsCount = _collisionsCount,
+			distance = a:distance(b)
+		}
 	end
 
 	-- Both points are on the same side of the box and cannot intersect with it
 	if bitwise.bit_and(aCode, bCode) ~= 0 then
-		return -1
+		return {
+			collides = false
+		}
 	end
 	
 	-- Choose first point outside the box (~= 0)

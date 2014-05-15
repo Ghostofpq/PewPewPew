@@ -14,9 +14,9 @@ local Class = storyboard.newScene()
 
 local vec2 = require("lib.ecusson.math.vec2")
 local Sprite = require("lib.ecusson.Sprite")
+local Ship = require("src.game.Ship")
 local Text = require("lib.ecusson.Text")
 local Sound = require("lib.ecusson.Sound")
-local Spawner = require("src.game.Spawner")
 
 -----------------------------------------------------------------------------------------
 -- Class attributes
@@ -74,20 +74,48 @@ function Class:enterScene(event)
 		value = 0
 	}
 
+	self.playership = Ship.create()
+
+	self.hourglass = 0
+
+	self.pews = {}
 	-- Add the key callback
 	Runtime:addEventListener("key", self)
 	Runtime:addEventListener("increaseScore", self)
+	Runtime:addEventListener("ecussonEnterFrame", self)
+end
+
+function Class:ecussonEnterFrame(options)
+	if self.hourglass <= 0 then
+		local pew = self.playership:pew()
+		self.pews[pew.id]=pew
+		self.hourglass = 1
+	end
+
+	self.hourglass = self.hourglass - options.dt
+
+	for k, v in pairs(self.pews) do
+		v:enterFrame(options)
+		if v.position.y <= 0 then
+			v:destroy()
+			self.pews[k]=nil
+		end
+	end
 end
 
 -- Called when scene is about to move offscreen:
 function Class:exitScene(event)
-	self.spawner:destroy()
 	self.scoreText:destroy()
 	self.foreground:destroy()
 	self.background:destroy()
-
+	self.playership:destroy()
 	Runtime:removeEventListener("increaseScore", self)
 	Runtime:removeEventListener("key", self)
+	Runtime:removeEventListener("ecussonEnterFrame", self)
+
+	for k, v in pairs(self.pews) do
+		v:destroy()
+	end
 end
 
 -----------------------------------------------------------------------------------------
