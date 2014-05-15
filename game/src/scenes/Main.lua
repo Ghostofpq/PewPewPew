@@ -83,13 +83,18 @@ function Class:enterScene(event)
 	Runtime:addEventListener("key", self)
 	Runtime:addEventListener("increaseScore", self)
 	Runtime:addEventListener("ecussonEnterFrame", self)
+	Runtime:addEventListener("touch", self)
+end
+
+function Class:touch(options)
+	self.playership:move{target=vec2(options.x,options.y)}
 end
 
 function Class:ecussonEnterFrame(options)
 	if self.hourglass <= 0 then
 		local pew = self.playership:pew()
 		self.pews[pew.id]=pew
-		self.hourglass = 1
+		self.hourglass = 0.5
 	end
 
 	self.hourglass = self.hourglass - options.dt
@@ -101,6 +106,8 @@ function Class:ecussonEnterFrame(options)
 			self.pews[k]=nil
 		end
 	end
+
+	self.playership:enterFrame(options)
 end
 
 -- Called when scene is about to move offscreen:
@@ -112,7 +119,7 @@ function Class:exitScene(event)
 	Runtime:removeEventListener("increaseScore", self)
 	Runtime:removeEventListener("key", self)
 	Runtime:removeEventListener("ecussonEnterFrame", self)
-
+	Runtime:removeEventListener("touch", self)
 	for k, v in pairs(self.pews) do
 		v:destroy()
 	end
