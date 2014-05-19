@@ -15,8 +15,10 @@ local Class = storyboard.newScene()
 local vec2 = require("lib.ecusson.math.vec2")
 local Sprite = require("lib.ecusson.Sprite")
 local Ship = require("src.game.Ship")
+local EnnemyShip = require("src.game.EnnemyShip")
 local Text = require("lib.ecusson.Text")
 local Sound = require("lib.ecusson.Sound")
+local aabb = require("lib.ecusson.math.aabb")
 
 -----------------------------------------------------------------------------------------
 -- Class attributes
@@ -77,38 +79,20 @@ function Class:enterScene(event)
 	self.playership = Ship.create()
 
 	self.hourglass = 0
+	self.hourglass2 = 0
 
 	self.pews = {}
+	self.ennemyships = {}
+
 	-- Add the key callback
 	Runtime:addEventListener("key", self)
 	Runtime:addEventListener("increaseScore", self)
 	Runtime:addEventListener("ecussonEnterFrame", self)
 	Runtime:addEventListener("touch", self)
+	Runtime:addEventListener("playerPew", self)
+	Runtime:addEventListener("ennemyPew", self)
 end
 
-function Class:touch(options)
-	self.playership:move{target=vec2(options.x,options.y)}
-end
-
-function Class:ecussonEnterFrame(options)
-	if self.hourglass <= 0 then
-		local pew = self.playership:pew()
-		self.pews[pew.id]=pew
-		self.hourglass = 0.5
-	end
-
-	self.hourglass = self.hourglass - options.dt
-
-	for k, v in pairs(self.pews) do
-		v:enterFrame(options)
-		if v.position.y <= 0 then
-			v:destroy()
-			self.pews[k]=nil
-		end
-	end
-
-	self.playership:enterFrame(options)
-end
 
 -- Called when scene is about to move offscreen:
 function Class:exitScene(event)
@@ -120,7 +104,12 @@ function Class:exitScene(event)
 	Runtime:removeEventListener("key", self)
 	Runtime:removeEventListener("ecussonEnterFrame", self)
 	Runtime:removeEventListener("touch", self)
+	Runtime:removeEventListener("playerPew", self)
+	Runtime:removeEventListener("ennemyPew", self)
 	for k, v in pairs(self.pews) do
+		v:destroy()
+	end
+	for k, v in pairs(self.ennemyships) do
 		v:destroy()
 	end
 end
@@ -128,6 +117,16 @@ end
 -----------------------------------------------------------------------------------------
 -- Callbacks
 -----------------------------------------------------------------------------------------
+
+function Class:playerPew(event)
+	local pew = self.playership:pew()
+	self.pews[pew.id]=pew
+end
+
+function Class:ennemyPew(event)
+	local pew = self.ennemyships[event.value]:pew()
+	self.pews[pew.id]=pew
+end
 
 -- Key listener
 function Class:key(event)
@@ -141,6 +140,50 @@ end
 function Class:increaseScore(options)
 	self.score = self.score + options.value
 	self.scoreText:setText(lang:translate("score", self.score))
+end
+
+function Class:ecussonEnterFrame(options)
+	-- check pews
+	for k, v in pairs(self.pews) do
+		v:enterFrame(options)
+		if v.position.y <= 0 or v.position.y >320 then
+			v:destroy()
+			self.pews[k]=nil
+		elseif v.ennemy then
+			if v:getAabb():collideAABB(self.playership:getAabb()) then
+				self:increaseScore{value=1}
+			end
+		else
+
+		end
+	end
+
+	if self.hourglass2 <= 0 then
+		local ennemyship = EnnemyShip.create{
+			position = vec2(50,50),
+			velocity = vec2(0,15),
+			weaponCooldown = 1
+		}
+
+		self.ennemyships[ennemyship.id]=ennemyship
+		self.hourglass2 = 5
+	end
+
+	self.hourglass = self.hourglass - options.dt
+	self.hourglass2 = self.hourglass2 - options.dt
+
+	-- Update PlayerShip
+	self.playership:enterFrame(options)
+
+	-- Update ennemy Ships
+	for k, v in pairs(self.ennemyships) do
+		-- Update ennemy Ship
+		v:enterFrame(options)
+	end
+end
+
+function Class:touch(options)
+	self.playership:move{target=vec2(options.x,options.y)}
 end
 
 -----------------------------------------------------------------------------------------

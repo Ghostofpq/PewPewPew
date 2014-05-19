@@ -15,6 +15,7 @@ local vec2 = require("lib.ecusson.math.vec2")
 local Sprite = require("lib.ecusson.Sprite")
 local Sound = require("lib.ecusson.Sound")
 local Shot = require("src.game.Shot")
+local aabb = require("lib.ecusson.math.aabb")
 
 
 -----------------------------------------------------------------------------------------
@@ -43,34 +44,49 @@ function Class.create(options)
 	self.maxSpeed = 400
 	self.target = self.position
 
+	self.weaponCooldown = 0.5
+	self.weaponTimer = 0
 	return self
 end
-
-
+-- Destroy the level
+function Class:destroy()
+	self.sprite:destroy()
+	utils.deleteObject(self)
+end
+-- Update
 function Class:enterFrame(options)
 	local destination = self.target - self.position
 	local velocity = destination:capLength(1) * self.maxSpeed
 	self.position.x = math.cap(self.position.x + velocity.x * options.dt , self.sprite.width, 200-self.sprite.width)
 	
 	self.sprite:setPosition(self.position)
-		
-end
 
--- Destroy the level
-function Class:destroy()
-	self.sprite:destroy()
-	utils.deleteObject(self)
+	self.weaponTimer = self.weaponTimer - options.dt	
+	if self.weaponTimer <= 0 then		
+		self.weaponTimer = self.weaponCooldown
+		Runtime:dispatchEvent{
+			name = "playerPew"
+		}
+	end	
 end
-
+-- Generates a Pew
 function Class:pew(options)
 	return Shot.create{
 		position = self.sprite.position,
-		velocity = vec2(0,-160)
+		velocity = vec2(0,-160),
+		ennemy = false
 	}
 end
-
+-- Sets the movement target
 function Class:move(options)
 	self.target = options.target
+end
+-- Gets the Ships AABB
+function Class:getAabb(options)
+	return aabb(
+		vec2(self.sprite.position.x - (self.sprite.width / 2), self.sprite.position.y - (self.sprite.height / 2)),
+		vec2(self.sprite.position.x + (self.sprite.width / 2), self.sprite.position.y + (self.sprite.height / 2))   
+	)
 end
 
 return Class
