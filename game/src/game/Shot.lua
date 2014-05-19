@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------------------------
 --
--- .lua
+-- Shot.lua
 --
 -- 
 --
@@ -19,7 +19,6 @@ local aabb = require("lib.ecusson.math.aabb")
 -----------------------------------------------------------------------------------------
 -- Initialization and Destruction
 -----------------------------------------------------------------------------------------
-
 function Class.create(options)
 	local self = utils.extend(Class)
 	self.id = utils.getUuid()
@@ -41,14 +40,15 @@ function Class:destroy()
 	self.sprite:destroy()
 	utils.deleteObject(self)
 end
-
+-----------------------------------------------------------------------------------------
+-- Methods
+-----------------------------------------------------------------------------------------
+-- Update Loop
 function Class:enterFrame(options)
 	self.position = self.position + self.velocity * options.dt
 	self.sprite:setPosition(self.position)
 end
------------------------------------------------------------------------------------------
--- Methods
------------------------------------------------------------------------------------------
+
 -- Gets the Pew AABB
 function Class:getAabb(options)
 	return aabb(
@@ -57,5 +57,4 @@ function Class:getAabb(options)
 	)
 end
 -----------------------------------------------------------------------------------------
-
 return Class

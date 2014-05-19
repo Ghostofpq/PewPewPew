@@ -14,6 +14,7 @@ local utils = require("lib.ecusson.utils")
 local vec2 = require("lib.ecusson.math.vec2")
 local Sprite = require("lib.ecusson.Sprite")
 local Shot = require("src.game.Shot")
+local aabb = require("lib.ecusson.math.aabb")
 
 
 -----------------------------------------------------------------------------------------
@@ -73,5 +74,11 @@ function Class:pew(options)
 		ennemy = true
 	}
 end
-
+-- Gets the Ships AABB
+function Class:getAabb(options)
+	return aabb(
+		vec2(self.sprite.position.x - (self.sprite.width / 2), self.sprite.position.y - (self.sprite.height / 2)),
+		vec2(self.sprite.position.x + (self.sprite.width / 2), self.sprite.position.y + (self.sprite.height / 2))   
+	)
+end
 return Class

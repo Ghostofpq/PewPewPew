@@ -151,10 +151,23 @@ function Class:ecussonEnterFrame(options)
 			self.pews[k]=nil
 		elseif v.ennemy then
 			if v:getAabb():collideAABB(self.playership:getAabb()) then
+				-- Destroy pew
+				v:destroy()
+				self.pews[k]=nil	
+				-- Destroy ship
 				self:increaseScore{value=1}
 			end
 		else
-
+			for k2, v2 in pairs(self.ennemyships) do
+				if v:getAabb():collideAABB(v2:getAabb()) then
+					-- Destroy pew
+					v:destroy()
+					self.pews[k]=nil
+					-- Destroy ennemy
+					v2:destroy()
+					self.ennemyships[k2]=nil
+				end
+			end
 		end
 	end
 
