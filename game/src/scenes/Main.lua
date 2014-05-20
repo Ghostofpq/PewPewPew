@@ -166,6 +166,7 @@ function Class:ecussonEnterFrame(options)
 					-- Destroy ennemy
 					v2:destroy()
 					self.ennemyships[k2]=nil
+					break
 				end
 			end
 		end
