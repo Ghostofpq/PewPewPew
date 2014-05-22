@@ -155,7 +155,7 @@ function Class:ecussonEnterFrame(options)
 				v:destroy()
 				self.pews[k]=nil	
 				-- Destroy ship
-				self:increaseScore{value=1}
+				-- TODO
 			end
 		else
 			for k2, v2 in pairs(self.ennemyships) do
@@ -166,6 +166,8 @@ function Class:ecussonEnterFrame(options)
 					-- Destroy ennemy
 					v2:destroy()
 					self.ennemyships[k2]=nil
+					-- increase score
+					self:increaseScore{value=1}
 					break
 				end
 			end
@@ -174,13 +176,14 @@ function Class:ecussonEnterFrame(options)
 
 	if self.hourglass2 <= 0 then
 		local ennemyship = EnnemyShip.create{
-			position = vec2(50,50),
+
+			position = vec2(math.random(20,180),50),
 			velocity = vec2(0,15),
-			weaponCooldown = 1
+			weaponCooldown = 2
 		}
 
 		self.ennemyships[ennemyship.id]=ennemyship
-		self.hourglass2 = 5
+		self.hourglass2 = math.random(5)
 	end
 
 	self.hourglass = self.hourglass - options.dt
