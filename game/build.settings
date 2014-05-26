@@ -6,12 +6,26 @@ settings = {
 		default = "portrait",
 		supported = { "portrait", "portraitUpsideDown" }
 	},
-	
+	 
+	android =
+    {
+        --this tells the Corona Simulator to create an expansion file.
+       	usesExpansionFile = false,
+ 		versionCode = "11",
+        --the following permissions are required to download expansion files.
+        usesPermissions =
+        {
+            "android.permission.INTERNET",
+            "com.android.vending.CHECK_LICENSE",
+            "android.permission.WRITE_EXTERNAL_STORAGE"
+        },
+    },
+
 	iphone = {
 		plist = {
 			UIStatusBarHidden = true,
 			UIPrerenderedIcon = false, -- set to false for "shine" overlay
 			UIApplicationExitsOnSuspend = false
 		}
-	}
+	},
 }

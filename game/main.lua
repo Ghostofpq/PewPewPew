@@ -18,12 +18,12 @@ math.randomseed(os.time())
 
 local Logger = require("lib.ecusson.Logger")
 Logger.create{
-	bugReportMail = "ecusson@yopmail.com",
+	bugReportMail = "ghostofpq@gmail.com",
 	bugReportName = "log.txt",
 	screenshotName = "screenshot.jpeg"
 }
 
-local utils = require("lib.ecusson.utils")
+local utils = require("lib.ecusson.Utils")
 local vec2 = require("lib.ecusson.math.vec2")
 local Lang = require("lib.ecusson.Lang")
 local Rectangle = require("lib.ecusson.Rectangle")

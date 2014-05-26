@@ -8,7 +8,7 @@
 
 local Class = {}
 
-local utils = require("lib.ecusson.utils")
+local utils = require("lib.ecusson.Utils")
 local vec2 = require("lib.ecusson.math.vec2")
 local Sprite = require("lib.ecusson.Sprite")
 local aabb = require("lib.ecusson.math.aabb")

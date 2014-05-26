@@ -126,7 +126,7 @@ function Class:sendEmail()
 	-- Prompt the user to send a mail
 	native.showPopup("mail", {
 		to = self.bugReportMail,
-		subject = "Kawaii Killer bug report",
+		subject = "PewPewPew bug report",
 		body = "",
 		attachment = attachments
 	})
