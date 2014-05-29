@@ -16,6 +16,7 @@ local vec2 = require("lib.ecusson.math.vec2")
 local Sprite = require("lib.ecusson.Sprite")
 local Ship = require("src.game.Ship")
 local EnnemyShip = require("src.game.EnnemyShip")
+local Asteroids = require("src.game.Asteroids")
 local Text = require("lib.ecusson.Text")
 local Sound = require("lib.ecusson.Sound")
 local aabb = require("lib.ecusson.math.aabb")
@@ -83,6 +84,9 @@ function Class:enterScene(event)
 
 	self.pews = {}
 	self.ennemyships = {}
+	self.asteroids = {}
+
+	self.asteroidsGenerationTime = 0--math.random(5,10)
 
 	-- Add the key callback
 	Runtime:addEventListener("key", self)
@@ -142,41 +146,118 @@ function Class:increaseScore(options)
 	self.scoreText:setText(lang:translate("score", self.score))
 end
 
-function Class:ecussonEnterFrame(options)
-	-- check pews
-	for k, v in pairs(self.pews) do
-		v:enterFrame(options)
-		if v.position.y <= 0 or v.position.y >320 then
-			v:destroy()
-			self.pews[k]=nil
-		elseif v.ennemy then
-			if v:getAabb():collideAABB(self.playership:getAabb()) then
+function Class:_updatePewsCollisions(options)
+	for pewId, pew in pairs(self.pews) do
+		if pew.ennemy then
+			if pew:getAabb():collideAABB(self.playership:getAabb()) then				
 				-- Destroy pew
-				v:destroy()
-				self.pews[k]=nil	
+				pew:destroy()
+				self.pews[pewId]=nil	
 				-- Destroy ship
 				-- TODO
-			end
+			else
+				for asteroidId, asteroid in pairs(self.asteroids) do
+					if pew:getAabb():collideAABB(asteroid:getAabb()) then
+						-- Destroy pew
+						pew:destroy()
+						self.pews[pewId]=nil						
+						-- Accelerate asteroid
+						asteroid.velocity.y = asteroid.velocity.y + 10
+						break
+					end
+				end
+			end 
 		else
-			for k2, v2 in pairs(self.ennemyships) do
-				if v:getAabb():collideAABB(v2:getAabb()) then
+			local destroyPew = false
+			for ennemyshipId, ennemyship in pairs(self.ennemyships) do
+				if pew:getAabb():collideAABB(ennemyship:getAabb()) then
 					-- Destroy pew
-					v:destroy()
-					self.pews[k]=nil
+					destroyPew = true
 					-- Destroy ennemy
-					v2:destroy()
-					self.ennemyships[k2]=nil
+					ennemyship:destroy()
+					self.ennemyships[ennemyshipId]=nil
 					-- increase score
 					self:increaseScore{value=1}
 					break
 				end
 			end
+			if (destroyPew) then
+				-- Destroy pew
+				pew:destroy()
+				self.pews[pewId]=nil	
+			else
+				for asteroidId, asteroid in pairs(self.asteroids) do
+					if pew:getAabb():collideAABB(asteroid:getAabb()) then
+						-- Destroy pew
+						pew:destroy()
+						self.pews[pewId]=nil					
+						-- Accelerate asteroid
+						asteroid.velocity.y = asteroid.velocity.y - 10
+						break
+					end
+				end 
+			end
+		end
+	end
+end
+
+function Class:_updateAsteroidsCollisions(options)
+	for asteroidId, asteroid in pairs(self.asteroids) do
+		if asteroid:getAabb():collideAABB(self.playership:getAabb()) then				
+			-- Destroy ship
+			-- TODO
+		end
+
+		for ennemyshipId, ennemyship in pairs(self.ennemyships) do
+			if asteroid:getAabb():collideAABB(ennemyship:getAabb()) then
+				-- Destroy ennemy
+				ennemyship:destroy()
+				self.ennemyships[ennemyshipId]=nil
+				-- increase score
+				self:increaseScore{value=1}
+				break
+			end
+		end
+		for asteroidId2, asteroid2 in pairs(self.asteroids) do
+			if(asteroidId2 ~= asteroidId) then 
+				if asteroid:getAabb():collideAABB(asteroid2:getAabb()) then
+					-- Destroy pew
+					asteroid:destroy()
+					self.asteroids[asteroidId]=nil	
+					-- Destroy pew
+					--asteroid2:destroy()
+					--self.asteroids[asteroid2Id]=nil
+					-- increase score
+					self:increaseScore{value=10}
+					break
+				end
+			end
+		end
+	end
+end
+
+function Class:ecussonEnterFrame(options)
+	for pewId, pew in pairs(self.pews) do
+		pew:enterFrame(options)
+		if pew.position.y <= 0 or pew.position.y >320 then
+			pew:destroy()
+			self.pews[pewId]=nil	
 		end
 	end
 
+	for asteroidId, asteroid in pairs(self.asteroids) do
+		asteroid:enterFrame(options)
+		if asteroid.position.y < 0 or asteroid.position.y >320 then
+			asteroid:destroy()
+			self.asteroids[asteroidId]=nil
+		end
+	end
+
+	self:_updatePewsCollisions()
+	self:_updateAsteroidsCollisions()
+	
 	if self.hourglass2 <= 0 then
 		local ennemyship = EnnemyShip.create{
-
 			position = vec2(math.random(20,180),50),
 			velocity = vec2(0,15),
 			weaponCooldown = 2
@@ -186,9 +267,30 @@ function Class:ecussonEnterFrame(options)
 		self.hourglass2 = math.random(5)
 	end
 
+	if self.asteroidsGenerationTime <= 0 then
+		local asteroidPosition
+		local asteroidVelocity
+		local generationType = math.random(0,1);
+
+		if(generationType == 0) then
+			asteroidPosition = vec2(0,math.random(0,120))
+			asteroidVelocity = vec2(math.random(5,20),math.random(20,40))
+		else -- if(generationType == 1) then		
+			asteroidPosition = vec2(200,math.random(0,120))
+			asteroidVelocity = vec2(-1 * math.random(5,20),math.random(20,40))
+		end
+
+		local asteroid = Asteroids.create{
+			position = asteroidPosition,
+			velocity = asteroidVelocity
+		}
+		self.asteroids[asteroid.id] = asteroid
+		self.asteroidsGenerationTime =math.random(5,10)
+	end
+
 	self.hourglass = self.hourglass - options.dt
 	self.hourglass2 = self.hourglass2 - options.dt
-
+	self.asteroidsGenerationTime = self.asteroidsGenerationTime - options.dt
 	-- Update PlayerShip
 	self.playership:enterFrame(options)
 

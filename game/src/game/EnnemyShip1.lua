@@ -1,20 +1,18 @@
 -----------------------------------------------------------------------------------------
 --
--- Author: Gop
--- (bisous à) 2014 Tabemasu Games (www.tabemasu.com)
+-- .lua
 --
--- Shot.lua
---
--- PewPewPew
+-- 
 --
 -----------------------------------------------------------------------------------------
 
 local Class = {}
 
-local utils = require("lib.ecusson.Utils")
+local utils = require("lib.ecusson.utils")
 local vec2 = require("lib.ecusson.math.vec2")
 local Sprite = require("lib.ecusson.Sprite")
-local aabb = require("lib.ecusson.math.aabb")
+local Sound = require("lib.ecusson.Sound")
+local Shot = require("src.game.Shot")
 -----------------------------------------------------------------------------------------
 -- Local configuration
 -----------------------------------------------------------------------------------------
@@ -24,18 +22,20 @@ local aabb = require("lib.ecusson.math.aabb")
 -----------------------------------------------------------------------------------------
 function Class.create(options)
 	local self = utils.extend(Class)
-	self.id = utils.getUuid()
+
 	-- Initialize attributes
+	local self = utils.extend(Class)
+
 	self.sprite = Sprite.create {
-		spriteSet = "generated",
-		animation = "laser",
-		group = groups.weapons,
-		position = options.position
+		spriteSet = "main",
+		animation = "vaisseau",
+		group = groups.ennemies,
+		position = vec2(100, 30)
 	}
 
-	self.velocity = options.velocity
-	self.position = options.position
-	self.ennemy = options.ennemy
+	self.position = self.sprite.position
+	self.velocity = vec2(0,20) 
+	self.hourglass = 1,5
 	return self
 end
 
@@ -46,18 +46,19 @@ end
 -----------------------------------------------------------------------------------------
 -- Methods
 -----------------------------------------------------------------------------------------
--- Update Loop
 function Class:enterFrame(options)
-	self.position = self.position + self.velocity * options.dt
+	self.position.x = self.position.x + velocity.x * options.dt
+	
 	self.sprite:setPosition(self.position)
 end
 
--- Gets the Pew AABB
-function Class:getAabb(options)
-	return aabb(
-		vec2(self.sprite.position.x - (self.sprite.width / 2), self.sprite.position.y - (self.sprite.height / 2)),
-		vec2(self.sprite.position.x + (self.sprite.width / 2), self.sprite.position.y + (self.sprite.height / 2))
-	)
+function Class:pew(options)
+	return Shot.create{
+		position = self.sprite.position,
+		velocity = vec2(0,160),
+		ennemy = true
+	}
 end
 -----------------------------------------------------------------------------------------
+
 return Class
