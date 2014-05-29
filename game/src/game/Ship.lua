@@ -56,9 +56,22 @@ end
 -- Update
 function Class:enterFrame(options)
 	local destination = self.target - self.position
+
 	local velocity = destination:capLength(1) * self.maxSpeed
+	
 	self.position.x = math.cap(self.position.x + velocity.x * options.dt , self.sprite.width, 200-self.sprite.width)
 	
+	if (velocity.x > 0) then
+		self.position.x = math.min(self.position.x, self.target.x)
+	elseif (velocity.x < 0) then
+		self.position.x = math.max(self.position.x, self.target.x)
+	end
+	if (velocity.y > 0) then
+		self.position.y = math.min(self.position.y, self.target.y)
+	elseif (velocity.y < 0) then
+		self.position.y = math.max(self.position.y, self.target.y)
+	end
+
 	self.sprite:setPosition(self.position)
 
 	self.weaponTimer = self.weaponTimer - options.dt	
