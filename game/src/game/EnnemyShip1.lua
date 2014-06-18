@@ -30,7 +30,8 @@ function Class.create(options)
 		spriteSet = "main",
 		animation = "vaisseau",
 		group = groups.ennemies,
-		position = vec2(100, 30)
+		position = vec2(30, 100),
+		rotation = -90
 	}
 
 	self.position = self.sprite.position
@@ -55,7 +56,7 @@ end
 function Class:pew(options)
 	return Shot.create{
 		position = self.sprite.position,
-		velocity = vec2(0,160),
+		velocity = vec2(-160,0),
 		ennemy = true
 	}
 end

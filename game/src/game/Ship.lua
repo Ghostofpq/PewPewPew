@@ -36,7 +36,8 @@ function Class.create(options)
 		spriteSet = "main",
 		animation = "vaisseau",
 		group = groups.playership,
-		position = vec2(100, 280)
+		position = vec2(30, 100),
+		rotation = 90
 	}
 
 	self.position = self.sprite.position
@@ -58,8 +59,8 @@ function Class:enterFrame(options)
 	local destination = self.target - self.position
 	local velocity = destination:capLength(1) * self.maxSpeed
 	
-	self.position.x = math.cap(self.position.x + velocity.x * options.dt , self.sprite.width, 200-self.sprite.width)
-	
+	--self.position.x = math.cap(self.position.x + velocity.x * options.dt , self.sprite.width, 320-self.sprite.width)
+	self.position.y =math.cap(self.position.y + velocity.y * options.dt , self.sprite.height, 200-self.sprite.height)
 	-- Stops the movement if the target is passed
 	if (velocity.x > 0) then
 		self.position.x = math.min(self.position.x, self.target.x)
@@ -86,7 +87,7 @@ end
 function Class:pew(options)
 	return Shot.create{
 		position = self.sprite.position,
-		velocity = vec2(0,-300),
+		velocity = vec2(300,0),
 		ennemy = false
 	}
 end

@@ -84,9 +84,9 @@ function Class:enterScene(event)
 
 	self.pews = {}
 	self.ennemyships = {}
-	self.asteroids = {}
+	--self.asteroids = {}
 
-	self.asteroidsGenerationTime = 0--math.random(5,10)
+	--self.asteroidsGenerationTime = 0--math.random(5,10)
 
 	-- Add the key callback
 	Runtime:addEventListener("key", self)
@@ -156,16 +156,16 @@ function Class:_updatePewsCollisions(options)
 				-- Destroy ship
 				-- TODO
 			else
-				for asteroidId, asteroid in pairs(self.asteroids) do
-					if pew:getAabb():collideAABB(asteroid:getAabb()) then
-						-- Destroy pew
-						pew:destroy()
-						self.pews[pewId]=nil						
-						-- Accelerate asteroid
-						asteroid.velocity.y = asteroid.velocity.y + 10
-						break
-					end
-				end
+				--for asteroidId, asteroid in pairs(self.asteroids) do
+				--	if pew:getAabb():collideAABB(asteroid:getAabb()) then
+				--		-- Destroy pew
+				--		pew:destroy()
+				--		self.pews[pewId]=nil						
+				--		-- Accelerate asteroid
+				--		asteroid.velocity.y = asteroid.velocity.y + 10
+				--		break
+				--	end
+				--end
 			end 
 		else
 			local destroyPew = false
@@ -186,80 +186,79 @@ function Class:_updatePewsCollisions(options)
 				pew:destroy()
 				self.pews[pewId]=nil	
 			else
-				for asteroidId, asteroid in pairs(self.asteroids) do
-					if pew:getAabb():collideAABB(asteroid:getAabb()) then
-						-- Destroy pew
-						pew:destroy()
-						self.pews[pewId]=nil					
-						-- Accelerate asteroid
-						asteroid.velocity.y = asteroid.velocity.y - 10
-						break
-					end
-				end 
+				--for asteroidId, asteroid in pairs(self.asteroids) do
+				--	if pew:getAabb():collideAABB(asteroid:getAabb()) then
+				--		-- Destroy pew
+				--		pew:destroy()
+				--		self.pews[pewId]=nil					
+				--		-- Accelerate asteroid
+				--		asteroid.velocity.y = asteroid.velocity.y - 10
+				--		break
+				--	end
+				--end 
 			end
 		end
 	end
 end
 
-function Class:_updateAsteroidsCollisions(options)
-	for asteroidId, asteroid in pairs(self.asteroids) do
-		if asteroid:getAabb():collideAABB(self.playership:getAabb()) then				
-			-- Destroy ship
-			-- TODO
-		end
-
-		for ennemyshipId, ennemyship in pairs(self.ennemyships) do
-			if asteroid:getAabb():collideAABB(ennemyship:getAabb()) then
-				-- Destroy ennemy
-				ennemyship:destroy()
-				self.ennemyships[ennemyshipId]=nil
-				-- increase score
-				self:increaseScore{value=1}
-				break
-			end
-		end
-		for asteroidId2, asteroid2 in pairs(self.asteroids) do
-			if(asteroidId2 ~= asteroidId) then 
-				if asteroid:getAabb():collideAABB(asteroid2:getAabb()) then
-					-- Destroy pew
-					asteroid:destroy()
-					self.asteroids[asteroidId]=nil	
-					-- Destroy pew
-					--asteroid2:destroy()
-					--self.asteroids[asteroid2Id]=nil
-					-- increase score
-					self:increaseScore{value=10}
-					break
-				end
-			end
-		end
-	end
-end
+--function Class:_updateAsteroidsCollisions(options)
+--	for asteroidId, asteroid in pairs(self.asteroids) do
+--		if asteroid:getAabb():collideAABB(self.playership:getAabb()) then				
+--			-- Destroy ship
+--			-- TODO
+--		end
+--		for ennemyshipId, ennemyship in pairs(self.ennemyships) do
+--			if asteroid:getAabb():collideAABB(ennemyship:getAabb()) then
+--				-- Destroy ennemy
+--				ennemyship:destroy()
+--				self.ennemyships[ennemyshipId]=nil
+--				-- increase score
+--				self:increaseScore{value=1}
+--				break
+--			end
+--		end
+--		for asteroidId2, asteroid2 in pairs(self.asteroids) do
+--			if(asteroidId2 ~= asteroidId) then 
+--				if asteroid:getAabb():collideAABB(asteroid2:getAabb()) then
+--					-- Destroy pew
+--					asteroid:destroy()
+--					self.asteroids[asteroidId]=nil	
+--					-- Destroy pew
+--					--asteroid2:destroy()
+--					--self.asteroids[asteroid2Id]=nil
+--					-- increase score
+--					self:increaseScore{value=10}
+--					break
+--				end
+--			end
+--		end
+--	end
+--end
 
 function Class:ecussonEnterFrame(options)
 	for pewId, pew in pairs(self.pews) do
 		pew:enterFrame(options)
-		if pew.position.y <= 0 or pew.position.y >320 then
+		if pew.position.y <= 0 or pew.position.y >200 then
 			pew:destroy()
 			self.pews[pewId]=nil	
 		end
 	end
 
-	for asteroidId, asteroid in pairs(self.asteroids) do
-		asteroid:enterFrame(options)
-		if asteroid.position.y < 0 or asteroid.position.y >320 then
-			asteroid:destroy()
-			self.asteroids[asteroidId]=nil
-		end
-	end
+	--for asteroidId, asteroid in pairs(self.asteroids) do
+	--	asteroid:enterFrame(options)
+	--	if asteroid.position.y < 0 or asteroid.position.y >200 then
+	--		asteroid:destroy()
+	--		self.asteroids[asteroidId]=nil
+	--	end
+	--end
 
 	self:_updatePewsCollisions()
-	self:_updateAsteroidsCollisions()
+	--self:_updateAsteroidsCollisions()
 	
 	if self.hourglass2 <= 0 then
 		local ennemyship = EnnemyShip.create{
-			position = vec2(math.random(20,180),50),
-			velocity = vec2(0,15),
+			position = vec2(280,math.random(20,180)),
+			velocity = vec2(-15,0),
 			weaponCooldown = 2
 		}
 
@@ -267,30 +266,30 @@ function Class:ecussonEnterFrame(options)
 		self.hourglass2 = math.random(5)
 	end
 
-	if self.asteroidsGenerationTime <= 0 then
-		local asteroidPosition
-		local asteroidVelocity
-		local generationType = math.random(0,1);
+	--if self.asteroidsGenerationTime <= 0 then
+	--	local asteroidPosition
+	--	local asteroidVelocity
+	--	local generationType = math.random(0,1);
 
-		if(generationType == 0) then
-			asteroidPosition = vec2(0,math.random(0,120))
-			asteroidVelocity = vec2(math.random(5,20),math.random(20,40))
-		else -- if(generationType == 1) then		
-			asteroidPosition = vec2(200,math.random(0,120))
-			asteroidVelocity = vec2(-1 * math.random(5,20),math.random(20,40))
-		end
-
-		local asteroid = Asteroids.create{
-			position = asteroidPosition,
-			velocity = asteroidVelocity
-		}
-		self.asteroids[asteroid.id] = asteroid
-		self.asteroidsGenerationTime =math.random(5,10)
-	end
+	--	if(generationType == 0) then
+	--		asteroidPosition = vec2(math.random(120,300),0)
+	--		asteroidVelocity = vec2(-math.random(5,20),-math.random(20,40))
+	--	else -- if(generationType == 1) then		
+	--		asteroidPosition = vec2(math.random(120,300),200)
+	--		asteroidVelocity = vec2(-math.random(5,20),-math.random(20,40))
+	--	end
+--
+	--	local asteroid = Asteroids.create{
+	--		position = asteroidPosition,
+	--		velocity = asteroidVelocity
+	--	}
+	--	--self.asteroids[asteroid.id] = asteroid
+	--	self.asteroidsGenerationTime = math.random(5,10)
+	--end
 
 	self.hourglass = self.hourglass - options.dt
 	self.hourglass2 = self.hourglass2 - options.dt
-	self.asteroidsGenerationTime = self.asteroidsGenerationTime - options.dt
+	--self.asteroidsGenerationTime = self.asteroidsGenerationTime - options.dt
 	-- Update PlayerShip
 	self.playership:enterFrame(options)
 

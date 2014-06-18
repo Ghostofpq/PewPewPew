@@ -125,7 +125,7 @@ local borders = {
 		color = { 0, 0, 0 },
 		anchor = "tr",
 		width = 30,
-		height = 320
+		height = 200
 	},
 	-- Right border
 	Rectangle.create{
@@ -133,15 +133,15 @@ local borders = {
 		color = { 0, 0, 0 },
 		anchor = "tl",
 		width = 30,
-		height = 320,
-		position = vec2(200, 0)
+		height = 200,
+		position = vec2(320, 0)
 	},
 	-- Top border
 	Rectangle.create{
 		group = groups.borders,
 		color = { 0, 0, 0 },
 		anchor = "bl",
-		width = 200,
+		width = 320,
 		height = 30
 	},
 	-- Bottom border
@@ -149,9 +149,9 @@ local borders = {
 		group = groups.borders,
 		color = { 0, 0, 0 },
 		anchor = "tl",
-		width = 200,
+		width = 320,
 		height = 30,
-		position = vec2(0, 320)
+		position = vec2(0, 200)
 	}
 }
 
@@ -160,7 +160,7 @@ local borders = {
 -----------------------------------------------------------------------------------------
 
 local performanceWidget = PerformanceWidget.create{
-	position = vec2(0, 320 - 15),
+	position = vec2(0, 200 - 15),
 	group = groups.debug
 }
 

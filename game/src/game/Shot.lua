@@ -30,7 +30,8 @@ function Class.create(options)
 		spriteSet = "generated",
 		animation = "laser",
 		group = groups.weapons,
-		position = options.position
+		position = options.position,		
+		rotation = 90
 	}
 
 	self.velocity = options.velocity
